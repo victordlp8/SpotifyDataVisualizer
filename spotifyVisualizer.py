@@ -24,8 +24,15 @@ def main():
     DATE_FORMAT = 'Week %W of %Y'
     paths = Paths()
 
-    fileList = [f for f in os.listdir(
-        paths.data) if os.path.isfile(os.path.join(paths.data, f))]
+    if os.path.exists(paths.data):    
+        fileList = [f for f in os.listdir(
+            paths.data) if os.path.isfile(os.path.join(paths.data, f))]
+        if len(fileList) == 0:
+            print('[ERROR] Unable to find StreamingHistory files.')
+            exit()
+    else:
+        print('[ERROR] Please make sure the directory \'data\' exists.')
+        exit()
 
     songs = []
     for file in fileList:
