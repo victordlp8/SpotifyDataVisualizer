@@ -24,7 +24,7 @@ def main():
     DATE_FORMAT = 'Week %W of %Y'
     paths = Paths()
 
-    if os.path.exists(paths.data):    
+    if os.path.exists(paths.data):
         fileList = [f for f in os.listdir(
             paths.data) if os.path.isfile(os.path.join(paths.data, f))]
         if len(fileList) == 0:
@@ -55,19 +55,21 @@ def main():
                     date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
                     duration=song['ms_played']/1000/60,
                     artist=song['master_metadata_album_artist_name'],
-                    name=song['master_metadata_album_artist_name'] + ' | ' + song['master_metadata_track_name']
+                    name=song['master_metadata_album_artist_name'] +
+                    ' | ' + song['master_metadata_track_name']
                 )
             except TypeError:
                 song = Song(
                     date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
                     duration=song['ms_played']/1000/60,
                     artist=song['episode_show_name'],
-                    name=song['episode_show_name'] + ' | ' + song['episode_name']
+                    name=song['episode_show_name'] +
+                    ' | ' + song['episode_name']
                 )
-        
+
         songs[i] = song
 
-    songs  = sorted(songs, key=lambda song: song.date)
+    songs = sorted(songs, key=lambda song: song.date)
 
     timeCounter = {}
     songsData, artistsData, columns = {}, {}, []
