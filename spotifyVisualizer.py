@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import attr
 import pandas as pd
@@ -72,45 +72,49 @@ def main():
     songs = sorted(songs, key=lambda song: song.date)
 
     timeCounter = {}
-    songsData, artistsData, columns = {}, {}, []
+    dates: list[datetime] = []
+    songsData, artistsData = {}, {}
     for song in tqdm(songs, desc='Analyzing data', unit='song'):
-        columns.append(song.date)
+        song.date = datetime.strptime(
+            song.date.strftime('%Y-%m-%d'), '%Y-%m-%d')
+        dates.append(song.date)
 
         song.date = song.date.strftime(DATE_FORMAT)
 
         if song.artist in artistsData:
-            if song.date in artistsData[song.artist]:
-                timeCounter[song.artist] += song.duration
-                artistsData[song.artist][song.date] = timeCounter[song.artist]
-            else:
-                timeCounter[song.artist] += song.duration
-                artistsData[song.artist][song.date] = timeCounter[song.artist]
+            timeCounter[song.artist] += song.duration
+            artistsData[song.artist][song.date] = timeCounter[song.artist]
         else:
             timeCounter[song.artist] = song.duration
-            artistsData[song.artist] = {song.date: timeCounter[song.artist]}
+            artistsData[song.artist] = {
+                song.date: timeCounter[song.artist]}
 
         if song.name in songsData:
-            if song.date in songsData[song.name]:
-                timeCounter[song.name] += song.duration
-                songsData[song.name][song.date] = timeCounter[song.name]
-            else:
-                timeCounter[song.name] += song.duration
-                songsData[song.name][song.date] = timeCounter[song.name]
+            timeCounter[song.name] += song.duration
+            songsData[song.name][song.date] = timeCounter[song.name]
         else:
             timeCounter[song.name] = song.duration
-            songsData[song.name] = {song.date: timeCounter[song.name]}
+            songsData[song.name] = {
+                song.date: timeCounter[song.name]}
 
-    columns = list(set(columns))
-    columns = sorted(columns)
-    columns = [col.strftime(DATE_FORMAT) for col in columns]
-    columns = sorted(set(columns), key=columns.index)
+    dates = list(set(dates))
+    dates = sorted(dates)
+
+    copy_dates = [dates[0]]
+    while copy_dates[-1] <= dates[-1]:
+        copy_dates.append(copy_dates[-1] + timedelta(days=1))
+    dates = copy_dates
+    del copy_dates
+
+    dates = [col.strftime(DATE_FORMAT) for col in dates]
+    dates = sorted(set(dates), key=dates.index)
 
     print('\nSaving songs data...')
-    dt = pd.DataFrame.from_dict(songsData, orient='index', columns=columns)
+    dt = pd.DataFrame.from_dict(songsData, orient='index', columns=dates)
     dt.to_csv('songsData.csv')
 
     print('\nSaving artists data...')
-    dt = pd.DataFrame.from_dict(artistsData, orient='index', columns=columns)
+    dt = pd.DataFrame.from_dict(artistsData, orient='index', columns=dates)
     dt.to_csv('artistsData.csv')
 
     print('\nFINISHED!!!')
