@@ -28,29 +28,50 @@ def main():
         fileList = [f for f in os.listdir(
             paths.data) if os.path.isfile(os.path.join(paths.data, f))]
         if len(fileList) == 0:
-            print('[ERROR] Unable to find StreamingHistory files.')
+            print('[ERROR] Unable to find StreamingHistory nor endsong files.')
             exit()
     else:
         print('[ERROR] Please make sure the directory \'data\' exists.')
         exit()
 
-    songs = []
+    songs: list[dict | Song] = []
     for file in fileList:
-        if file.find('StreamingHistory') != -1:
+        if file.find('StreamingHistory') != -1 or file.find('endsong') != -1:
             with open(os.path.join(paths.data, file), 'r', encoding='utf-8') as file:
                 songs += json.load(file)
     del file
 
+    for i, song in enumerate(tqdm(songs, desc='Reading data', unit='song')):
+        try:
+            song = Song(
+                date=datetime.strptime(song['endTime'], '%Y-%m-%d %H:%M'),
+                duration=song['msPlayed']/1000/60,
+                artist=song['artistName'],
+                name=song['artistName'] + ' | ' + song['trackName']
+            )
+        except KeyError:
+            try:
+                song = Song(
+                    date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
+                    duration=song['ms_played']/1000/60,
+                    artist=song['master_metadata_album_artist_name'],
+                    name=song['master_metadata_album_artist_name'] + ' | ' + song['master_metadata_track_name']
+                )
+            except TypeError:
+                song = Song(
+                    date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
+                    duration=song['ms_played']/1000/60,
+                    artist=song['episode_show_name'],
+                    name=song['episode_show_name'] + ' | ' + song['episode_name']
+                )
+        
+        songs[i] = song
+
+    songs  = sorted(songs, key=lambda song: song.date)
+
     timeCounter = {}
     songsData, artistsData, columns = {}, {}, []
-    for song in tqdm(songs, desc='Analyzing songs', unit='song'):
-        song = Song(
-            date=datetime.strptime(song['endTime'], '%Y-%m-%d %H:%M'),
-            duration=song['msPlayed']/1000/60,
-            artist=song['artistName'],
-            name=song['artistName'] + ' | ' + song['trackName']
-        )
-
+    for song in tqdm(songs, desc='Analyzing data', unit='song'):
         columns.append(song.date)
 
         song.date = song.date.strftime(DATE_FORMAT)
