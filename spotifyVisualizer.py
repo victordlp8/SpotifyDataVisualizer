@@ -59,13 +59,21 @@ def main():
                     ' | ' + song['master_metadata_track_name']
                 )
             except TypeError:
-                song = Song(
-                    date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
-                    duration=song['ms_played']/1000/60,
-                    artist=song['episode_show_name'],
-                    name=song['episode_show_name'] +
-                    ' | ' + song['episode_name']
-                )
+                try:
+                    song = Song(
+                        date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
+                        duration=song['ms_played']/1000/60,
+                        artist=song['episode_show_name'],
+                        name=song['episode_show_name'] +
+                        ' | ' + song['episode_name']
+                    )
+                except TypeError:
+                    song = Song(
+                        date=datetime.strptime(song['ts'], '%Y-%m-%dT%H:%M:%SZ'),
+                        duration=song['ms_played']/1000/60,
+                        artist=song['episode_name'],
+                        name=song['episode_name']
+                    )
 
         songs[i] = song
 
